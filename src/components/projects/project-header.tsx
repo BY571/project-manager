@@ -164,15 +164,10 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
         {/* Status dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="cursor-pointer"
-            render={
-              <Badge
-                className={`${STATUS_COLORS[status]} text-white cursor-pointer`}
-              />
-            }
+            className={`inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-xs font-medium text-white cursor-pointer transition-opacity hover:opacity-80 ${STATUS_COLORS[status]}`}
           >
             {STATUS_LABELS[status]}
-            <ChevronDown className="size-3 ml-0.5" />
+            <ChevronDown className="size-3" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel>Change Status</DropdownMenuLabel>
@@ -194,15 +189,10 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
         {/* Priority dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger
-            className="cursor-pointer"
-            render={
-              <Badge
-                className={`${PRIORITY_COLORS[priority]} text-white cursor-pointer`}
-              />
-            }
+            className={`inline-flex items-center gap-1 rounded-md px-2.5 py-0.5 text-xs font-medium text-white cursor-pointer transition-opacity hover:opacity-80 ${PRIORITY_COLORS[priority]}`}
           >
             {PRIORITY_LABELS[priority]}
-            <ChevronDown className="size-3 ml-0.5" />
+            <ChevronDown className="size-3" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuLabel>Change Priority</DropdownMenuLabel>
@@ -227,7 +217,7 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
         {/* Tags */}
         <DropdownMenu>
           <DropdownMenuTrigger
-            render={<Button variant="outline" size="xs" />}
+            className="inline-flex items-center gap-1 rounded-md border border-input bg-transparent px-2.5 py-0.5 text-xs font-medium cursor-pointer transition-colors hover:bg-accent"
           >
             Tags
             <ChevronDown className="size-3" />
