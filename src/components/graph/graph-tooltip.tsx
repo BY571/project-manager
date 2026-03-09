@@ -10,6 +10,7 @@ export interface TooltipData {
   tasksCompleted: number;
   tasksTotal: number;
   blockerCount: number;
+  tags: { name: string; color: string }[];
   x: number;
   y: number;
 }
@@ -46,6 +47,20 @@ export function GraphTooltip({ data }: GraphTooltipProps) {
             {STATUS_LABELS[data.status as ProjectStatus] ?? data.status}
           </span>
         </div>
+
+        {data.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {data.tags.map((tag) => (
+              <span
+                key={tag.name}
+                className="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium text-white"
+                style={{ backgroundColor: tag.color }}
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
 
         {description && (
           <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">

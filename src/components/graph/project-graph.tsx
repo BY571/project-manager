@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import * as d3 from "d3";
-import { Settings } from "lucide-react";
+import { Settings, Filter } from "lucide-react";
 import { GraphTooltip, type TooltipData } from "./graph-tooltip";
 import { useActiveTag } from "./active-tag-context";
 import { useActiveWorkspace } from "@/components/workspace-context";
@@ -86,6 +86,18 @@ export function ProjectGraph({ projects: allProjects, tags }: ProjectGraphProps)
   const [fillOpacity, setFillOpacity] = useState(DEFAULTS.fillOpacity);
   const [strokeOpacity, setStrokeOpacity] = useState(DEFAULTS.strokeOpacity);
   const [settingsSaved, setSettingsSaved] = useState(false);
+
+  // Dashboard filters
+  type DashFilter = "on_hold" | "blocked" | "open_tasks";
+  const [activeFilters, setActiveFilters] = useState<Set<DashFilter>>(new Set());
+  const toggleFilter = (f: DashFilter) => {
+    setActiveFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(f)) next.delete(f);
+      else next.add(f);
+      return next;
+    });
+  };
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -467,6 +479,7 @@ export function ProjectGraph({ projects: allProjects, tags }: ProjectGraphProps)
           blockerCount: d.notes.filter(
             (n) => n.type === "blocker" && !n.resolved,
           ).length,
+          tags: d.tags.map((t) => ({ name: t.tag.name, color: t.tag.color })),
           x: event.clientX,
           y: event.clientY,
         });
@@ -757,6 +770,62 @@ export function ProjectGraph({ projects: allProjects, tags }: ProjectGraphProps)
   }, [activeTagId, projects]);
 
   // -------------------------------------------------------------------------
+  // Dashboard filter effect (on_hold, blocked, open_tasks)
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg || projects.length === 0) return;
+    // Don't apply dashboard filters when tag filter is active
+    if (activeTagId) return;
+
+    const d3Svg = d3.select(svg);
+
+    if (activeFilters.size === 0) {
+      // Reset all opacities
+      d3Svg.selectAll(".nodes g").transition().duration(300).attr("opacity", 1);
+      d3Svg.selectAll(".links line").transition().duration(300).attr("opacity", 0.6);
+      d3Svg.selectAll(".tag-links line").transition().duration(300).attr("opacity", 0.35);
+      return;
+    }
+
+    const matchingIds = new Set(
+      projects
+        .filter((p) => {
+          if (activeFilters.has("on_hold") && p.status === "on_hold") return true;
+          if (activeFilters.has("blocked") && p.notes.some((n) => n.type === "blocker" && !n.resolved)) return true;
+          if (activeFilters.has("open_tasks") && p.tasks.some((t) => !t.completed)) return true;
+          return false;
+        })
+        .map((p) => p.id),
+    );
+
+    d3Svg
+      .selectAll<SVGGElement, GraphNode>(".nodes g")
+      .transition()
+      .duration(300)
+      .attr("opacity", (d) => (matchingIds.has(d.id) ? 1 : 0.12));
+
+    d3Svg
+      .selectAll<SVGLineElement, GraphLink>(".links line")
+      .transition()
+      .duration(300)
+      .attr("opacity", (d) => {
+        const sourceId = typeof d.source === "object" ? (d.source as GraphNode).id : d.source;
+        const targetId = typeof d.target === "object" ? (d.target as GraphNode).id : d.target;
+        return matchingIds.has(sourceId as string) && matchingIds.has(targetId as string) ? 0.6 : 0.06;
+      });
+
+    d3Svg
+      .selectAll<SVGLineElement, { source: string; target: string }>(".tag-links line")
+      .transition()
+      .duration(300)
+      .attr("opacity", (d) =>
+        matchingIds.has(d.source) && matchingIds.has(d.target) ? 0.6 : 0.04,
+      );
+  }, [activeFilters, activeTagId, projects]);
+
+  // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
 
@@ -780,6 +849,28 @@ export function ProjectGraph({ projects: allProjects, tags }: ProjectGraphProps)
         className="w-full h-full"
         style={{ display: "block" }}
       />
+
+      {/* Filter chips */}
+      <div className="absolute top-4 left-4 flex items-center gap-2">
+        <Filter className="h-3.5 w-3.5 text-gray-500" />
+        {([
+          ["on_hold", "On Hold"],
+          ["blocked", "Blocked"],
+          ["open_tasks", "Open Tasks"],
+        ] as [DashFilter, string][]).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => toggleFilter(key)}
+            className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
+              activeFilters.has(key)
+                ? "bg-cyan-500/20 border-cyan-500/40 text-cyan-300"
+                : "bg-gray-900/60 border-gray-800 text-gray-500 hover:text-gray-300 hover:border-gray-700"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {/* Settings toggle */}
       <button

@@ -30,7 +30,7 @@ import {
   PRIORITY_COLORS,
 } from "@/types";
 import type { ProjectStatus, ProjectPriority } from "@/types";
-import { Trash2, ChevronDown, FolderOpen, Terminal, Github } from "lucide-react";
+import { Trash2, ChevronDown, FolderOpen, Terminal, Github, Archive, ArchiveRestore } from "lucide-react";
 import { launchTerminal } from "@/lib/actions/terminal";
 
 interface ProjectTag {
@@ -48,6 +48,7 @@ interface ProjectHeaderProps {
     priority: string;
     path: string;
     githubUrl: string;
+    archived: boolean;
     tags: ProjectTag[];
   };
   allTags: { id: string; name: string; color: string }[];
@@ -143,6 +144,11 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
     await updateProject(project.id, { tagIds: newTagIds });
   };
 
+  const handleArchive = async () => {
+    await updateProject(project.id, { archived: !project.archived });
+    if (!project.archived) router.push("/");
+  };
+
   const handleDelete = async () => {
     setDeleting(true);
     await deleteProject(project.id);
@@ -151,6 +157,20 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
 
   return (
     <div className="space-y-4">
+      {/* Archived banner */}
+      {project.archived && (
+        <div className="flex items-center justify-between gap-3 rounded-lg bg-muted/50 border border-border px-4 py-2.5">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Archive className="size-4" />
+            This project is archived.
+          </div>
+          <Button variant="outline" size="sm" onClick={handleArchive}>
+            <ArchiveRestore className="size-3.5 mr-1.5" />
+            Restore
+          </Button>
+        </div>
+      )}
+
       {/* Top row: name + actions */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
@@ -179,13 +199,23 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
           )}
         </div>
 
-        <Button
-          variant="destructive"
-          size="icon-sm"
-          onClick={() => setConfirmDelete(true)}
-        >
-          <Trash2 className="size-4" />
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={handleArchive}
+            title={project.archived ? "Restore from archive" : "Archive project"}
+          >
+            {project.archived ? <ArchiveRestore className="size-4" /> : <Archive className="size-4" />}
+          </Button>
+          <Button
+            variant="destructive"
+            size="icon-sm"
+            onClick={() => setConfirmDelete(true)}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Status, Priority, Tags row */}

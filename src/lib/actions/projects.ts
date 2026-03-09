@@ -3,14 +3,25 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 
-export async function getProjects() {
+export async function getProjects(includeArchived = false) {
   return db.project.findMany({
+    where: includeArchived ? {} : { archived: false },
     include: {
       tags: { include: { tag: true } },
       tasks: true,
       notes: true,
       outgoingRelations: { include: { target: true } },
       incomingRelations: { include: { source: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+}
+
+export async function getArchivedProjects() {
+  return db.project.findMany({
+    where: { archived: true },
+    include: {
+      tags: { include: { tag: true } },
     },
     orderBy: { updatedAt: "desc" },
   });
@@ -68,6 +79,7 @@ export async function updateProject(
     githubUrl?: string;
     tagIds?: string[];
     workspaceId?: string | null;
+    archived?: boolean;
   }
 ) {
   const { tagIds, ...projectData } = data;

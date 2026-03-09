@@ -15,12 +15,13 @@ import {
 
 interface MainLayoutProps {
   projects: { id: string; name: string; status: string; workspaceId?: string | null }[];
+  archivedProjects: { id: string; name: string; status: string; workspaceId?: string | null }[];
   tags: { id: string; name: string; color: string }[];
   workspaces: { id: string; name: string; color: string }[];
   children: React.ReactNode;
 }
 
-export function MainLayout({ projects, tags, workspaces, children }: MainLayoutProps) {
+export function MainLayout({ projects, archivedProjects, tags, workspaces, children }: MainLayoutProps) {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string | null>(null);
@@ -29,6 +30,7 @@ export function MainLayout({ projects, tags, workspaces, children }: MainLayoutP
   const sidebarContent = (
     <Sidebar
       projects={projects}
+      archivedProjects={archivedProjects}
       tags={tags}
       workspaces={workspaces}
       onNewProject={() => {

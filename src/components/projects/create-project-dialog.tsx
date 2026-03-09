@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, FolderOpen, Github } from "lucide-react";
 import { createProject } from "@/lib/actions/projects";
 import { createTag } from "@/lib/actions/tags";
 import type { ProjectStatus, ProjectPriority } from "@/types";
@@ -29,6 +29,8 @@ export function CreateProjectDialog({ open, onOpenChange, tags, activeWorkspaceI
   const [status, setStatus] = useState<ProjectStatus>("not_started");
   const [priority, setPriority] = useState<ProjectPriority>("medium");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [projectPath, setProjectPath] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
   const [newTagName, setNewTagName] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -41,6 +43,8 @@ export function CreateProjectDialog({ open, onOpenChange, tags, activeWorkspaceI
       description,
       status,
       priority,
+      path: projectPath.trim() || undefined,
+      githubUrl: githubUrl.trim() || undefined,
       tagIds: selectedTagIds,
       workspaceId: activeWorkspaceId ?? null,
     });
@@ -71,6 +75,8 @@ export function CreateProjectDialog({ open, onOpenChange, tags, activeWorkspaceI
     setStatus("not_started");
     setPriority("medium");
     setSelectedTagIds([]);
+    setProjectPath("");
+    setGithubUrl("");
     setNewTagName("");
   };
 
@@ -142,6 +148,30 @@ export function CreateProjectDialog({ open, onOpenChange, tags, activeWorkspaceI
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium flex items-center gap-1.5">
+              <FolderOpen className="h-3.5 w-3.5" /> Project Directory
+            </label>
+            <Input
+              value={projectPath}
+              onChange={(e) => setProjectPath(e.target.value)}
+              placeholder="/home/user/projects/my-project"
+              className="h-8 text-sm font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium flex items-center gap-1.5">
+              <Github className="h-3.5 w-3.5" /> GitHub URL
+            </label>
+            <Input
+              value={githubUrl}
+              onChange={(e) => setGithubUrl(e.target.value)}
+              placeholder="https://github.com/user/repo"
+              className="h-8 text-sm font-mono"
+            />
           </div>
 
           <div>

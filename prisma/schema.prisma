@@ -28,6 +28,7 @@ model Project {
   priority    String   @default("medium")       // low | medium | high | urgent
   path        String   @default("")              // local directory path for terminal launch
   githubUrl   String   @default("")              // GitHub repository URL
+  archived    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

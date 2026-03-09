@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Plus, FolderOpen, X } from "lucide-react";
+import { LayoutDashboard, Plus, FolderOpen, X, Archive, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ const WORKSPACE_COLORS = [
 
 interface SidebarProps {
   projects: SidebarProject[];
+  archivedProjects: SidebarProject[];
   tags: SidebarTag[];
   workspaces: SidebarWorkspace[];
   onNewProject: () => void;
@@ -50,6 +51,7 @@ interface SidebarProps {
 
 export function Sidebar({
   projects,
+  archivedProjects,
   tags,
   workspaces,
   onNewProject,
@@ -64,6 +66,7 @@ export function Sidebar({
   const [newWorkspaceName, setNewWorkspaceName] = useState("");
   const [creatingWorkspace, setCreatingWorkspace] = useState(false);
   const newWorkspaceInputRef = useRef<HTMLInputElement>(null);
+  const [showArchive, setShowArchive] = useState(false);
 
   const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
   const [dropTargetStatus, setDropTargetStatus] = useState<ProjectStatus | null>(null);
@@ -355,6 +358,37 @@ export function Sidebar({
                 </Badge>
               ))}
             </div>
+          </div>
+        )}
+
+        {archivedProjects.length > 0 && (
+          <div className="mt-4 border-t pt-3">
+            <button
+              onClick={() => setShowArchive((s) => !s)}
+              className="flex items-center gap-2 w-full px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
+            >
+              <ChevronRight className={cn("h-3 w-3 transition-transform", showArchive && "rotate-90")} />
+              <Archive className="h-3 w-3" />
+              Archive ({archivedProjects.length})
+            </button>
+            {showArchive && (
+              <div className="mt-1">
+                {archivedProjects.map((project) => (
+                  <Link
+                    key={project.id}
+                    href={`/projects/${project.id}`}
+                    onClick={onNavigate}
+                    className={cn(
+                      "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-accent truncate text-muted-foreground",
+                      pathname === `/projects/${project.id}` && "bg-accent font-medium text-foreground"
+                    )}
+                  >
+                    <Archive className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{project.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </nav>
