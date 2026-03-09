@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Sidebar } from "@/components/sidebar";
 import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
+import { ActiveTagContext } from "@/components/graph/active-tag-context";
 
 interface MainLayoutProps {
   projects: { id: string; name: string; status: string }[];
@@ -15,20 +16,22 @@ export function MainLayout({ projects, tags, children }: MainLayoutProps) {
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
 
   return (
-    <div className="flex h-screen">
-      <Sidebar
-        projects={projects}
-        tags={tags}
-        onNewProject={() => setShowCreateDialog(true)}
-        activeTagId={activeTagId}
-        onTagFilter={setActiveTagId}
-      />
-      <main className="flex-1 overflow-y-auto">{children}</main>
-      <CreateProjectDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        tags={tags}
-      />
-    </div>
+    <ActiveTagContext value={{ activeTagId }}>
+      <div className="flex h-screen">
+        <Sidebar
+          projects={projects}
+          tags={tags}
+          onNewProject={() => setShowCreateDialog(true)}
+          activeTagId={activeTagId}
+          onTagFilter={setActiveTagId}
+        />
+        <main className="flex-1 overflow-y-auto">{children}</main>
+        <CreateProjectDialog
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          tags={tags}
+        />
+      </div>
+    </ActiveTagContext>
   );
 }
