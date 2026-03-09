@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Plus, FolderOpen, X } from "lucide-react";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { STATUS_LABELS, STATUS_COLORS } from "@/types";
 import { createWorkspace, deleteWorkspace } from "@/lib/actions/workspaces";
+import { updateProject } from "@/lib/actions/projects";
 import type { ProjectStatus } from "@/types";
 
 type SidebarProject = {
@@ -64,6 +65,8 @@ export function Sidebar({
   const [creatingWorkspace, setCreatingWorkspace] = useState(false);
   const newWorkspaceInputRef = useRef<HTMLInputElement>(null);
   const tabBarRef = useRef<HTMLDivElement>(null);
+  const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null);
+  const [dropTargetStatus, setDropTargetStatus] = useState<ProjectStatus | null>(null);
 
   useEffect(() => {
     if (showNewWorkspace && newWorkspaceInputRef.current) {
@@ -104,6 +107,47 @@ export function Sidebar({
     }
     await deleteWorkspace(workspaceId);
   };
+
+  const handleDragStart = useCallback((e: React.DragEvent, projectId: string) => {
+    setDraggedProjectId(projectId);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", projectId);
+    // Make the drag ghost slightly transparent
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = "0.5";
+    }
+  }, []);
+
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    setDraggedProjectId(null);
+    setDropTargetStatus(null);
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = "1";
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent, status: ProjectStatus) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDropTargetStatus(status);
+  }, []);
+
+  const handleDragLeave = useCallback(() => {
+    setDropTargetStatus(null);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent, targetStatus: ProjectStatus) => {
+    e.preventDefault();
+    const projectId = e.dataTransfer.getData("text/plain");
+    setDraggedProjectId(null);
+    setDropTargetStatus(null);
+    if (!projectId) return;
+
+    const project = filteredProjects.find((p) => p.id === projectId);
+    if (!project || project.status === targetStatus) return;
+
+    await updateProject(projectId, { status: targetStatus });
+  }, [filteredProjects]);
 
   return (
     <aside className="w-64 border-r bg-muted/30 flex flex-col h-full">
@@ -250,21 +294,42 @@ export function Sidebar({
           )}
           {statusOrder.map((status) => {
             const group = groupedProjects[status];
-            if (!group?.length) return null;
+            const isDropTarget = dropTargetStatus === status;
+            const hasProjects = group && group.length > 0;
+            // Always show status groups when dragging so user can drop into empty groups
+            if (!hasProjects && !draggedProjectId) return null;
             return (
-              <div key={status} className="mb-3">
+              <div
+                key={status}
+                className={cn(
+                  "mb-3 rounded-md transition-colors",
+                  isDropTarget && "bg-accent/50 ring-1 ring-accent"
+                )}
+                onDragOver={(e) => handleDragOver(e, status)}
+                onDragLeave={handleDragLeave}
+                onDrop={(e) => handleDrop(e, status)}
+              >
                 <div className="flex items-center gap-2 px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   <div className={cn("h-2 w-2 rounded-full", STATUS_COLORS[status])} />
                   {STATUS_LABELS[status]}
                 </div>
-                {group.map((project) => (
+                {!hasProjects && draggedProjectId && (
+                  <div className="px-3 py-2 text-xs text-muted-foreground/50 italic">
+                    Drop here
+                  </div>
+                )}
+                {group?.map((project) => (
                   <Link
                     key={project.id}
                     href={`/projects/${project.id}`}
                     onClick={onNavigate}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, project.id)}
+                    onDragEnd={handleDragEnd}
                     className={cn(
-                      "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-accent truncate",
-                      pathname === `/projects/${project.id}` && "bg-accent font-medium"
+                      "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-accent truncate cursor-grab active:cursor-grabbing",
+                      pathname === `/projects/${project.id}` && "bg-accent font-medium",
+                      draggedProjectId === project.id && "opacity-50"
                     )}
                   >
                     <FolderOpen className="h-3.5 w-3.5 shrink-0" />
