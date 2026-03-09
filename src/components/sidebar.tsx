@@ -27,9 +27,10 @@ interface SidebarProps {
   onNewProject: () => void;
   activeTagId?: string | null;
   onTagFilter?: (tagId: string | null) => void;
+  onNavigate?: () => void;
 }
 
-export function Sidebar({ projects, tags, onNewProject, activeTagId, onTagFilter }: SidebarProps) {
+export function Sidebar({ projects, tags, onNewProject, activeTagId, onTagFilter, onNavigate }: SidebarProps) {
   const pathname = usePathname();
 
   const groupedProjects = projects.reduce<Record<string, SidebarProject[]>>((acc, project) => {
@@ -57,6 +58,7 @@ export function Sidebar({ projects, tags, onNewProject, activeTagId, onTagFilter
       <nav className="flex-1 overflow-y-auto px-3">
         <Link
           href="/"
+          onClick={onNavigate}
           className={cn(
             "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent",
             pathname === "/" && "bg-accent font-medium"
@@ -67,6 +69,11 @@ export function Sidebar({ projects, tags, onNewProject, activeTagId, onTagFilter
         </Link>
 
         <div className="mt-4">
+          {projects.length === 0 && (
+            <p className="px-3 py-4 text-xs text-muted-foreground text-center">
+              No projects yet. Create one to get started.
+            </p>
+          )}
           {statusOrder.map((status) => {
             const group = groupedProjects[status];
             if (!group?.length) return null;
@@ -80,6 +87,7 @@ export function Sidebar({ projects, tags, onNewProject, activeTagId, onTagFilter
                   <Link
                     key={project.id}
                     href={`/projects/${project.id}`}
+                    onClick={onNavigate}
                     className={cn(
                       "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors hover:bg-accent truncate",
                       pathname === `/projects/${project.id}` && "bg-accent font-medium"
