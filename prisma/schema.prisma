@@ -26,6 +26,8 @@ model Project {
   description String   @default("")
   status      String   @default("not_started") // not_started | in_progress | on_hold | done
   priority    String   @default("medium")       // low | medium | high | urgent
+  path        String   @default("")              // local directory path for terminal launch
+  githubUrl   String   @default("")              // GitHub repository URL
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

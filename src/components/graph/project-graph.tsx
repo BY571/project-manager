@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import * as d3 from "d3";
+import { Settings } from "lucide-react";
 import { GraphTooltip, type TooltipData } from "./graph-tooltip";
 import { useActiveTag } from "./active-tag-context";
 import { useActiveWorkspace } from "@/components/workspace-context";
+import { applyAccentColor, removeAccentColor } from "@/components/accent-color-initializer";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -69,10 +71,10 @@ const STATUS_STROKE_COLORS: Record<string, string> = {
 };
 
 const PRIORITY_RADIUS: Record<string, number> = {
-  low: 20,
-  medium: 25,
-  high: 30,
-  urgent: 35,
+  low: 8,
+  medium: 10,
+  high: 12,
+  urgent: 14,
 };
 
 function linkDashArray(type: string): string | null {
@@ -95,6 +97,60 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
   const { activeWorkspaceId } = useActiveWorkspace();
 
   const activeTagId = propActiveTagId !== undefined ? propActiveTagId : contextActiveTagId;
+
+  // Graph style settings
+  const DEFAULTS = { nodeColor: "#22d3ee", fillOpacity: 1, strokeOpacity: 0.8 };
+  const [showSettings, setShowSettings] = useState(false);
+  const [nodeColor, setNodeColor] = useState(DEFAULTS.nodeColor);
+  const [fillOpacity, setFillOpacity] = useState(DEFAULTS.fillOpacity);
+  const [strokeOpacity, setStrokeOpacity] = useState(DEFAULTS.strokeOpacity);
+  const [settingsSaved, setSettingsSaved] = useState(false);
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("graph-style");
+      if (saved) {
+        const s = JSON.parse(saved);
+        if (s.nodeColor) setNodeColor(s.nodeColor);
+        if (s.fillOpacity !== undefined) setFillOpacity(s.fillOpacity);
+        if (s.strokeOpacity !== undefined) setStrokeOpacity(s.strokeOpacity);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const handleSaveSettings = () => {
+    localStorage.setItem("graph-style", JSON.stringify({ nodeColor, fillOpacity, strokeOpacity }));
+    setSettingsSaved(true);
+    setTimeout(() => setSettingsSaved(false), 1500);
+  };
+
+  const handleResetSettings = () => {
+    setNodeColor(DEFAULTS.nodeColor);
+    setFillOpacity(DEFAULTS.fillOpacity);
+    setStrokeOpacity(DEFAULTS.strokeOpacity);
+    localStorage.removeItem("graph-style");
+    removeAccentColor();
+  };
+
+  // Live-update node styling + app-wide accent color
+  useEffect(() => {
+    // Update CSS custom properties for the entire app
+    applyAccentColor(nodeColor);
+
+    // Update D3 node circles
+    const svg = svgRef.current;
+    if (!svg) return;
+    const d3Svg = d3.select(svg);
+    d3Svg.selectAll(".node-circle")
+      .attr("fill", nodeColor)
+      .attr("fill-opacity", fillOpacity)
+      .attr("stroke", nodeColor)
+      .attr("stroke-opacity", strokeOpacity);
+
+    // Update the SVG neon-tag-link filter flood color
+    d3Svg.select("#neon-tag-link feFlood").attr("flood-color", nodeColor);
+  }, [nodeColor, fillOpacity, strokeOpacity]);
 
   // Filter projects by active workspace
   const projects = activeWorkspaceId
@@ -207,7 +263,7 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
       .attr("d", "M0,-4L8,0L0,4")
       .attr("fill", "#4b5563");
 
-    // Glow filter for nodes
+    // Glow filter for nodes (hover)
     const filter = defs
       .append("filter")
       .attr("id", "glow")
@@ -217,11 +273,79 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
       .attr("height", "200%");
     filter
       .append("feGaussianBlur")
-      .attr("stdDeviation", "3")
+      .attr("stdDeviation", "4")
       .attr("result", "coloredBlur");
     const feMerge = filter.append("feMerge");
     feMerge.append("feMergeNode").attr("in", "coloredBlur");
     feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+    // Neon glow filter for nodes (always on, subtle)
+    const neonNodeFilter = defs
+      .append("filter")
+      .attr("id", "neon-node")
+      .attr("x", "-80%")
+      .attr("y", "-80%")
+      .attr("width", "260%")
+      .attr("height", "260%");
+    neonNodeFilter
+      .append("feGaussianBlur")
+      .attr("stdDeviation", "6")
+      .attr("in", "SourceGraphic")
+      .attr("result", "blur");
+    neonNodeFilter
+      .append("feColorMatrix")
+      .attr("in", "blur")
+      .attr("type", "matrix")
+      .attr("values", "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.5 0")
+      .attr("result", "dimBlur");
+    const neonNodeMerge = neonNodeFilter.append("feMerge");
+    neonNodeMerge.append("feMergeNode").attr("in", "dimBlur");
+    neonNodeMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+    // Neon glow filter for links
+    const neonLinkFilter = defs
+      .append("filter")
+      .attr("id", "neon-link")
+      .attr("x", "-20%")
+      .attr("y", "-20%")
+      .attr("width", "140%")
+      .attr("height", "140%");
+    neonLinkFilter
+      .append("feGaussianBlur")
+      .attr("stdDeviation", "3")
+      .attr("in", "SourceGraphic")
+      .attr("result", "blur");
+    const neonLinkMerge = neonLinkFilter.append("feMerge");
+    neonLinkMerge.append("feMergeNode").attr("in", "blur");
+    neonLinkMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+    // Cyan neon glow for shared-tag links
+    const neonTagLinkFilter = defs
+      .append("filter")
+      .attr("id", "neon-tag-link")
+      .attr("x", "-30%")
+      .attr("y", "-30%")
+      .attr("width", "160%")
+      .attr("height", "160%");
+    neonTagLinkFilter
+      .append("feFlood")
+      .attr("flood-color", "#22d3ee")
+      .attr("flood-opacity", "0.6")
+      .attr("result", "cyan");
+    neonTagLinkFilter
+      .append("feComposite")
+      .attr("in", "cyan")
+      .attr("in2", "SourceGraphic")
+      .attr("operator", "in")
+      .attr("result", "cyanShape");
+    neonTagLinkFilter
+      .append("feGaussianBlur")
+      .attr("stdDeviation", "4")
+      .attr("in", "cyanShape")
+      .attr("result", "glow");
+    const neonTagMerge = neonTagLinkFilter.append("feMerge");
+    neonTagMerge.append("feMergeNode").attr("in", "glow");
+    neonTagMerge.append("feMergeNode").attr("in", "SourceGraphic");
 
     // Root group for zoom/pan
     const g = d3Svg.append("g");
@@ -269,7 +393,48 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
     });
 
     // -----------------------------------------------------------------------
-    // Links
+    // Shared-tag links (projects that share at least one tag)
+    // -----------------------------------------------------------------------
+
+    interface TagLink {
+      source: string;
+      target: string;
+      color: string;
+      tagName: string;
+    }
+
+    const tagLinks: TagLink[] = [];
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const a = nodes[i];
+        const b = nodes[j];
+        const sharedTag = a.tags.find((at) =>
+          b.tags.some((bt) => bt.tag.id === at.tag.id)
+        );
+        if (sharedTag) {
+          tagLinks.push({
+            source: a.id,
+            target: b.id,
+            color: sharedTag.tag.color,
+            tagName: sharedTag.tag.name,
+          });
+        }
+      }
+    }
+
+    const tagLinkGroup = g.append("g").attr("class", "tag-links");
+
+    const tagLinkElements = tagLinkGroup
+      .selectAll<SVGLineElement, TagLink>("line")
+      .data(tagLinks)
+      .join("line")
+      .attr("stroke", "#6b7280")
+      .attr("stroke-width", 1.2)
+      .attr("stroke-opacity", 0.4)
+      .attr("filter", "url(#neon-tag-link)");
+
+    // -----------------------------------------------------------------------
+    // Links (project relations)
     // -----------------------------------------------------------------------
 
     const linkGroup = g.append("g").attr("class", "links");
@@ -282,6 +447,7 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
       .attr("stroke-width", 1.5)
       .attr("stroke-opacity", 0.6)
       .attr("marker-end", "url(#arrowhead)")
+      .attr("filter", "url(#neon-link)")
       .each(function (d) {
         const dash = linkDashArray(d.type);
         if (dash) {
@@ -309,7 +475,7 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
           .select(".node-circle")
           .transition()
           .duration(150)
-          .attr("r", d.radius + 4)
+          .attr("r", d.radius + 3)
           .attr("filter", "url(#glow)");
 
         setTooltip({
@@ -346,10 +512,11 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
       .append("circle")
       .attr("class", "node-circle")
       .attr("r", (d) => d.radius)
-      .attr("fill", (d) => d.color)
-      .attr("stroke", (d) => STATUS_STROKE_COLORS[d.status] ?? "#9ca3af")
-      .attr("stroke-width", 2)
-      .attr("stroke-opacity", 0.7);
+      .attr("fill", "#22d3ee")
+      .attr("stroke", "#22d3ee")
+      .attr("stroke-width", 1.5)
+      .attr("stroke-opacity", 0.8)
+      .attr("filter", "url(#neon-node)");
 
     // Task progress ring
     nodeElements.each(function (d) {
@@ -358,15 +525,15 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
       const ratio = completed / d.tasks.length;
       if (ratio === 0) return;
 
-      const r = d.radius + 4;
+      const r = d.radius + 3;
       const circumference = 2 * Math.PI * r;
 
       d3.select(this)
         .append("circle")
         .attr("r", r)
         .attr("fill", "none")
-        .attr("stroke", "#22c55e")
-        .attr("stroke-width", 2.5)
+        .attr("stroke", "#22d3ee")
+        .attr("stroke-width", 1.5)
         .attr("stroke-opacity", 0.5)
         .attr("stroke-dasharray", `${circumference * ratio} ${circumference * (1 - ratio)}`)
         .attr("stroke-dashoffset", circumference * 0.25)
@@ -378,7 +545,7 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
     nodeElements
       .append("text")
       .attr("text-anchor", "middle")
-      .attr("dy", (d) => d.radius + 16)
+      .attr("dy", (d) => d.radius + 14)
       .attr("fill", "#d1d5db")
       .attr("font-size", "11px")
       .attr("font-weight", "500")
@@ -396,11 +563,11 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
         d3
           .forceLink<GraphNode, GraphLink>(links)
           .id((d) => d.id)
-          .distance(120)
+          .distance(160)
           .strength(0.4),
       )
-      .force("charge", d3.forceManyBody().strength(-300).distanceMax(400))
-      .force("collision", d3.forceCollide<GraphNode>().radius((d) => d.radius + 12).strength(0.8))
+      .force("charge", d3.forceManyBody().strength(-500).distanceMax(500))
+      .force("collision", d3.forceCollide<GraphNode>().radius((d) => d.radius + 20).strength(0.9))
       .force(
         "clusterX",
         d3
@@ -423,7 +590,18 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
 
     simulationRef.current = simulation;
 
+    // Build a lookup for quick node access by id
+    const nodeById = new Map(nodes.map((n) => [n.id, n]));
+
     function ticked() {
+      // Update shared-tag links
+      tagLinkElements
+        .attr("x1", (d) => nodeById.get(d.source)?.x ?? 0)
+        .attr("y1", (d) => nodeById.get(d.source)?.y ?? 0)
+        .attr("x2", (d) => nodeById.get(d.target)?.x ?? 0)
+        .attr("y2", (d) => nodeById.get(d.target)?.y ?? 0);
+
+      // Update relation links
       linkElements
         .attr("x1", (d) => {
           const source = d.source as GraphNode;
@@ -559,6 +737,7 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
       // Reset all opacities
       d3Svg.selectAll(".nodes g").transition().duration(300).attr("opacity", 1);
       d3Svg.selectAll(".links line").transition().duration(300).attr("opacity", 0.6);
+      d3Svg.selectAll(".tag-links line").transition().duration(300).attr("opacity", 0.35);
       d3Svg.selectAll(".clusters circle").transition().duration(300).attr("opacity", 0.06);
       d3Svg.selectAll(".clusters text").transition().duration(300).attr("opacity", 0.5);
       return;
@@ -588,6 +767,15 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
           ? 0.6
           : 0.06;
       });
+
+    // Highlight shared-tag links for the active tag
+    d3Svg
+      .selectAll<SVGLineElement, { source: string; target: string }>(".tag-links line")
+      .transition()
+      .duration(300)
+      .attr("opacity", (d) =>
+        matchingProjectIds.has(d.source) && matchingProjectIds.has(d.target) ? 0.6 : 0.04,
+      );
 
     // Highlight the matching cluster bubble
     d3Svg
@@ -627,19 +815,91 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
         style={{ display: "block" }}
       />
 
+      {/* Settings toggle */}
+      <button
+        onClick={() => setShowSettings((s) => !s)}
+        className="absolute top-4 right-4 p-2 rounded-lg bg-gray-900/80 backdrop-blur-sm border border-gray-800 text-gray-400 hover:text-gray-200 transition-colors"
+        title="Graph settings"
+      >
+        <Settings className="h-4 w-4" />
+      </button>
+
+      {/* Settings panel */}
+      {showSettings && (
+        <div className="absolute top-14 right-4 w-56 bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-800 p-4 space-y-4">
+          <div className="text-xs font-medium text-gray-300">Accent Color</div>
+
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-xs text-gray-400">Color</span>
+            <input
+              type="color"
+              value={nodeColor}
+              onChange={(e) => setNodeColor(e.target.value)}
+              className="h-7 w-10 rounded border border-gray-700 bg-transparent cursor-pointer"
+            />
+          </label>
+
+          <label className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">Fill opacity</span>
+              <span className="text-xs text-gray-500">{Math.round(fillOpacity * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={fillOpacity}
+              onChange={(e) => setFillOpacity(parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-cyan-400"
+            />
+          </label>
+
+          <label className="space-y-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">Stroke opacity</span>
+              <span className="text-xs text-gray-500">{Math.round(strokeOpacity * 100)}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={strokeOpacity}
+              onChange={(e) => setStrokeOpacity(parseFloat(e.target.value))}
+              className="w-full h-1.5 accent-cyan-400"
+            />
+          </label>
+
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleResetSettings}
+              className="flex-1 text-xs py-1.5 rounded-md border border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600 transition-colors"
+            >
+              Reset
+            </button>
+            <button
+              onClick={handleSaveSettings}
+              className="flex-1 text-xs py-1.5 rounded-md bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/30 transition-colors"
+            >
+              {settingsSaved ? "Saved!" : "Save"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Legend */}
       <div className="absolute bottom-4 left-4 flex gap-4 bg-gray-900/80 backdrop-blur-sm rounded-lg px-4 py-2.5 border border-gray-800">
         <div className="flex items-center gap-3 text-xs text-gray-400">
-          <span className="font-medium text-gray-300 mr-1">Status:</span>
-          {Object.entries(STATUS_COLORS).map(([status, color]) => (
-            <span key={status} className="flex items-center gap-1">
-              <span
-                className="inline-block h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: color }}
-              />
-              <span className="capitalize">{status.replace("_", " ")}</span>
-            </span>
-          ))}
+          <span className="font-medium text-gray-300 mr-1">Size:</span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2 w-2 rounded-full border border-cyan-400/60 bg-cyan-400/20" />
+            low
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-3 w-3 rounded-full border border-cyan-400/60 bg-cyan-400/20" />
+            urgent
+          </span>
         </div>
         <div className="border-l border-gray-700 pl-3 flex items-center gap-3 text-xs text-gray-400">
           <span className="font-medium text-gray-300 mr-1">Links:</span>
@@ -654,6 +914,10 @@ export function ProjectGraph({ projects: allProjects, tags, activeTagId: propAct
           <span className="flex items-center gap-1">
             <svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="#6b7280" strokeWidth="1.5" strokeDasharray="2,2" /></svg>
             related
+          </span>
+          <span className="flex items-center gap-1">
+            <svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="#22d3ee" strokeWidth="1.2" strokeOpacity="0.6" /></svg>
+            shared tag
           </span>
         </div>
       </div>

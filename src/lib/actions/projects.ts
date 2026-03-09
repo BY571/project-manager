@@ -34,6 +34,8 @@ export async function createProject(data: {
   description?: string;
   status?: string;
   priority?: string;
+  path?: string;
+  githubUrl?: string;
   tagIds?: string[];
   workspaceId?: string | null;
 }) {
@@ -43,6 +45,8 @@ export async function createProject(data: {
       description: data.description ?? "",
       status: data.status ?? "not_started",
       priority: data.priority ?? "medium",
+      path: data.path ?? "",
+      githubUrl: data.githubUrl ?? "",
       workspaceId: data.workspaceId ?? null,
       tags: data.tagIds
         ? { create: data.tagIds.map((tagId) => ({ tagId })) }
@@ -60,6 +64,8 @@ export async function updateProject(
     description?: string;
     status?: string;
     priority?: string;
+    path?: string;
+    githubUrl?: string;
     tagIds?: string[];
     workspaceId?: string | null;
   }

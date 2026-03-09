@@ -71,7 +71,7 @@ export function MainLayout({ projects, tags, workspaces, children }: MainLayoutP
               >
                 <Menu className="size-5" />
               </Button>
-              <span className="font-semibold text-sm">Project Manager</span>
+              <span className="font-semibold text-sm">Project Harness</span>
             </div>
 
             <main className="flex-1 overflow-y-auto">{children}</main>

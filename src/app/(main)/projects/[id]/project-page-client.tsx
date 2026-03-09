@@ -12,6 +12,8 @@ interface ProjectPageClientProps {
     description: string;
     status: string;
     priority: string;
+    path: string;
+    githubUrl: string;
     tags: { projectId: string; tagId: string; tag: { id: string; name: string; color: string } }[];
     tasks: { id: string; projectId: string; title: string; description: string; completed: boolean; order: number; createdAt: Date }[];
     notes: { id: string; projectId: string; content: string; type: string; resolved: boolean; createdAt: Date }[];

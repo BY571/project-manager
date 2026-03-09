@@ -89,7 +89,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.18 0.008 270);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.75 0.18 195);
+  --neon-accent: #22d3ee;
+  --primary: var(--neon-accent);
   --primary-foreground: oklch(0.13 0.005 270);
   --secondary: oklch(0.25 0.01 270);
   --secondary-foreground: oklch(0.985 0 0);
@@ -100,24 +101,20 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(0.40 0.03 270 / 30%);
   --input: oklch(0.40 0.03 270 / 30%);
-  --ring: oklch(0.75 0.18 195);
-  --chart-1: oklch(0.75 0.18 195);
+  --ring: var(--neon-accent);
+  --chart-1: var(--neon-accent);
   --chart-2: oklch(0.70 0.20 300);
   --chart-3: oklch(0.65 0.25 330);
   --chart-4: oklch(0.70 0.15 150);
   --chart-5: oklch(0.65 0.20 60);
   --sidebar: oklch(0.15 0.008 270);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.75 0.18 195);
+  --sidebar-primary: var(--neon-accent);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.25 0.015 270);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.40 0.03 270 / 25%);
-  --sidebar-ring: oklch(0.75 0.18 195);
-
-  --neon-cyan: oklch(0.75 0.18 195);
-  --neon-purple: oklch(0.65 0.25 300);
-  --neon-pink: oklch(0.70 0.22 330);
+  --sidebar-ring: var(--neon-accent);
 }
 
 @layer base {
@@ -136,93 +133,112 @@
 
 /* Neon text glow */
 .neon-text {
-  color: #22d3ee;
-  text-shadow: 0 0 7px #22d3ee99, 0 0 25px #22d3ee44, 0 0 50px #22d3ee22;
+  color: var(--neon-accent);
+  text-shadow:
+    0 0 7px color-mix(in srgb, var(--neon-accent) 60%, transparent),
+    0 0 25px color-mix(in srgb, var(--neon-accent) 25%, transparent),
+    0 0 50px color-mix(in srgb, var(--neon-accent) 13%, transparent);
 }
 
 /* Neon glow on cards */
 .dark [data-slot="card"] {
-  box-shadow: 0 0 15px -3px #22d3ee15, 0 0 30px -5px #a855f710, inset 0 1px 0 #ffffff08;
-  border: 1px solid #22d3ee20;
+  box-shadow:
+    0 0 15px -3px color-mix(in srgb, var(--neon-accent) 8%, transparent),
+    0 0 30px -5px #a855f710,
+    inset 0 1px 0 #ffffff08;
+  border: 1px solid color-mix(in srgb, var(--neon-accent) 12%, transparent);
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 .dark [data-slot="card"]:hover {
-  box-shadow: 0 0 20px -3px #22d3ee30, 0 0 40px -5px #a855f720, inset 0 1px 0 #ffffff10;
-  border-color: #22d3ee35;
+  box-shadow:
+    0 0 20px -3px color-mix(in srgb, var(--neon-accent) 20%, transparent),
+    0 0 40px -5px #a855f720,
+    inset 0 1px 0 #ffffff10;
+  border-color: color-mix(in srgb, var(--neon-accent) 20%, transparent);
 }
 
 /* Neon sidebar */
 .dark aside {
-  border-right: 1px solid #22d3ee18 !important;
+  border-right: 1px solid color-mix(in srgb, var(--neon-accent) 10%, transparent) !important;
   box-shadow: 1px 0 25px -5px #a855f718;
 }
 
 /* Neon active sidebar link */
 .dark nav a.bg-accent {
-  box-shadow: inset 3px 0 0 #22d3ee, 0 0 12px -4px #22d3ee40;
-  background: #22d3ee10 !important;
+  box-shadow: inset 3px 0 0 var(--neon-accent), 0 0 12px -4px color-mix(in srgb, var(--neon-accent) 25%, transparent);
+  background: color-mix(in srgb, var(--neon-accent) 6%, transparent) !important;
 }
 
 /* Neon primary buttons */
 .dark button.bg-primary {
-  box-shadow: 0 0 15px -2px #22d3ee50, 0 0 30px -5px #22d3ee25;
+  box-shadow:
+    0 0 15px -2px color-mix(in srgb, var(--neon-accent) 30%, transparent),
+    0 0 30px -5px color-mix(in srgb, var(--neon-accent) 15%, transparent);
   transition: box-shadow 0.3s ease;
 }
 .dark button.bg-primary:hover {
-  box-shadow: 0 0 25px -2px #22d3ee70, 0 0 50px -5px #22d3ee35;
+  box-shadow:
+    0 0 25px -2px color-mix(in srgb, var(--neon-accent) 45%, transparent),
+    0 0 50px -5px color-mix(in srgb, var(--neon-accent) 20%, transparent);
 }
 
 /* Neon glow on "New Project" button specifically */
 .dark aside button.w-full {
-  box-shadow: 0 0 12px -2px #22d3ee40;
+  box-shadow: 0 0 12px -2px color-mix(in srgb, var(--neon-accent) 25%, transparent);
 }
 .dark aside button.w-full:hover {
-  box-shadow: 0 0 22px -2px #22d3ee60;
+  box-shadow: 0 0 22px -2px color-mix(in srgb, var(--neon-accent) 40%, transparent);
 }
 
 /* Neon focus rings */
 .dark *:focus-visible {
-  outline-color: #22d3eebb !important;
-  box-shadow: 0 0 10px #22d3ee40, 0 0 20px #22d3ee15 !important;
+  outline-color: color-mix(in srgb, var(--neon-accent) 75%, transparent) !important;
+  box-shadow:
+    0 0 10px color-mix(in srgb, var(--neon-accent) 25%, transparent),
+    0 0 20px color-mix(in srgb, var(--neon-accent) 8%, transparent) !important;
 }
 
 /* Neon dialog glow */
 .dark [data-slot="dialog-overlay"] + div,
 .dark [role="dialog"] {
-  box-shadow: 0 0 50px -8px #22d3ee30, 0 0 100px -15px #a855f720 !important;
-  border: 1px solid #22d3ee25 !important;
+  box-shadow:
+    0 0 50px -8px color-mix(in srgb, var(--neon-accent) 20%, transparent),
+    0 0 100px -15px #a855f720 !important;
+  border: 1px solid color-mix(in srgb, var(--neon-accent) 15%, transparent) !important;
 }
 
 /* Neon badges */
 .dark [data-slot="badge"] {
-  box-shadow: 0 0 8px -1px #22d3ee30;
+  box-shadow: 0 0 8px -1px color-mix(in srgb, var(--neon-accent) 20%, transparent);
 }
 
 /* Neon checkbox checked */
 .dark [data-state="checked"] {
-  box-shadow: 0 0 10px -1px #22d3ee55;
+  box-shadow: 0 0 10px -1px color-mix(in srgb, var(--neon-accent) 35%, transparent);
 }
 
 /* Neon workspace tab active indicator */
 .dark .neon-tab-active {
-  box-shadow: 0 0 8px -2px #22d3ee60;
+  box-shadow: 0 0 8px -2px color-mix(in srgb, var(--neon-accent) 40%, transparent);
 }
 
 /* Neon input focus */
 .dark input:focus,
 .dark textarea:focus {
-  border-color: #22d3ee50 !important;
-  box-shadow: 0 0 10px -3px #22d3ee30, 0 0 20px -5px #22d3ee15 !important;
+  border-color: color-mix(in srgb, var(--neon-accent) 30%, transparent) !important;
+  box-shadow:
+    0 0 10px -3px color-mix(in srgb, var(--neon-accent) 20%, transparent),
+    0 0 20px -5px color-mix(in srgb, var(--neon-accent) 8%, transparent) !important;
 }
 
 /* Neon status dot pulse for in_progress */
 .dark .bg-blue-500 {
-  box-shadow: 0 0 6px 1px #3b82f680;
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--neon-accent) 50%, transparent);
 }
 
 /* Neon drop target glow */
 .dark .ring-accent {
-  box-shadow: 0 0 15px -3px #22d3ee40 !important;
+  box-shadow: 0 0 15px -3px color-mix(in srgb, var(--neon-accent) 25%, transparent) !important;
 }
 
 /* Scanline overlay */

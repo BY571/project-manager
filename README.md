@@ -1,4 +1,4 @@
-# Project Manager
+# Project Harness
 
 A web application for organizing and tracking multiple projects. Features an interactive graph visualization showing how projects relate to each other, with detailed per-project views for tasks, notes, and blockers.
 

@@ -30,7 +30,8 @@ import {
   PRIORITY_COLORS,
 } from "@/types";
 import type { ProjectStatus, ProjectPriority } from "@/types";
-import { Trash2, ChevronDown } from "lucide-react";
+import { Trash2, ChevronDown, FolderOpen, Terminal, Github, ExternalLink } from "lucide-react";
+import { launchTerminal } from "@/lib/actions/terminal";
 
 interface ProjectTag {
   projectId: string;
@@ -45,6 +46,8 @@ interface ProjectHeaderProps {
     description: string;
     status: string;
     priority: string;
+    path: string;
+    githubUrl: string;
     tags: ProjectTag[];
   };
   allTags: { id: string; name: string; color: string }[];
@@ -61,11 +64,18 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     project.tags.map((t) => t.tagId)
   );
+  const [projectPath, setProjectPath] = useState(project.path ?? "");
+  const [editingPath, setEditingPath] = useState(false);
+  const [githubUrl, setGithubUrl] = useState(project.githubUrl ?? "");
+  const [editingGithub, setEditingGithub] = useState(false);
+  const [launching, setLaunching] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const nameInputRef = useRef<HTMLInputElement>(null);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const pathInputRef = useRef<HTMLInputElement>(null);
+  const githubInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editingName && nameInputRef.current) {
@@ -79,6 +89,18 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
       descriptionRef.current.focus();
     }
   }, [editingDescription]);
+
+  useEffect(() => {
+    if (editingPath && pathInputRef.current) {
+      pathInputRef.current.focus();
+    }
+  }, [editingPath]);
+
+  useEffect(() => {
+    if (editingGithub && githubInputRef.current) {
+      githubInputRef.current.focus();
+    }
+  }, [editingGithub]);
 
   const saveName = async () => {
     setEditingName(false);
@@ -94,6 +116,30 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
     setEditingDescription(false);
     if (description === project.description) return;
     await updateProject(project.id, { description });
+  };
+
+  const savePath = async () => {
+    setEditingPath(false);
+    const trimmed = projectPath.trim();
+    if (trimmed === project.path) return;
+    await updateProject(project.id, { path: trimmed });
+  };
+
+  const saveGithubUrl = async () => {
+    setEditingGithub(false);
+    const trimmed = githubUrl.trim();
+    if (trimmed === (project.githubUrl ?? "")) return;
+    await updateProject(project.id, { githubUrl: trimmed });
+  };
+
+  const handleLaunchTerminal = async () => {
+    if (!projectPath.trim()) return;
+    setLaunching(true);
+    const result = await launchTerminal(projectPath.trim());
+    if (!result.success) {
+      alert(result.error);
+    }
+    setLaunching(false);
   };
 
   const changeStatus = async (newStatus: ProjectStatus) => {
@@ -291,6 +337,98 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
           {description || "Add a description..."}
         </p>
       )}
+
+      {/* Project path + terminal launch */}
+      <div className="flex items-center gap-2">
+        <FolderOpen className="size-4 text-muted-foreground shrink-0" />
+        {editingPath ? (
+          <Input
+            ref={pathInputRef}
+            value={projectPath}
+            onChange={(e) => setProjectPath(e.target.value)}
+            onBlur={savePath}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") savePath();
+              if (e.key === "Escape") {
+                setProjectPath(project.path);
+                setEditingPath(false);
+              }
+            }}
+            placeholder="/home/user/projects/my-project"
+            className="h-8 text-sm font-mono flex-1"
+          />
+        ) : (
+          <span
+            className="text-sm font-mono text-muted-foreground cursor-pointer rounded px-2 py-1 hover:bg-muted transition-colors flex-1 truncate"
+            onClick={() => setEditingPath(true)}
+          >
+            {projectPath || "Set project directory..."}
+          </span>
+        )}
+      </div>
+
+      {/* GitHub URL */}
+      <div className="flex items-center gap-2">
+        <Github className="size-4 text-muted-foreground shrink-0" />
+        {editingGithub ? (
+          <Input
+            ref={githubInputRef}
+            value={githubUrl}
+            onChange={(e) => setGithubUrl(e.target.value)}
+            onBlur={saveGithubUrl}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveGithubUrl();
+              if (e.key === "Escape") {
+                setGithubUrl(project.githubUrl ?? "");
+                setEditingGithub(false);
+              }
+            }}
+            placeholder="https://github.com/user/repo"
+            className="h-8 text-sm font-mono flex-1"
+          />
+        ) : (
+          <span
+            className="text-sm font-mono text-muted-foreground cursor-pointer rounded px-2 py-1 hover:bg-muted transition-colors flex-1 truncate"
+            onClick={() => setEditingGithub(true)}
+          >
+            {githubUrl || "Set GitHub URL..."}
+          </span>
+        )}
+        {githubUrl.trim() && (
+          <a
+            href={githubUrl.trim()}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button size="sm" variant="outline" className="shrink-0 gap-1.5">
+              <ExternalLink className="size-3.5" />
+              Open
+            </Button>
+          </a>
+        )}
+      </div>
+
+      {/* Launch Agent button */}
+      <Button
+        onClick={handleLaunchTerminal}
+        disabled={!projectPath.trim() || launching}
+        className={
+          projectPath.trim()
+            ? "w-full gap-2 bg-primary text-primary-foreground hover:bg-primary/80"
+            : "w-full gap-2 bg-muted text-muted-foreground cursor-not-allowed"
+        }
+        style={
+          projectPath.trim()
+            ? {
+                boxShadow:
+                  "0 0 20px -2px var(--neon-accent, #22d3ee), 0 0 40px -5px color-mix(in srgb, var(--neon-accent, #22d3ee) 30%, transparent)",
+              }
+            : undefined
+        }
+      >
+        <Terminal className="size-4" />
+        {launching ? "Launching..." : "Launch Agent"}
+      </Button>
 
       {/* Delete confirmation dialog */}
       <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
