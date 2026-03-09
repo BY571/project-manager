@@ -83,37 +83,41 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.13 0.005 270);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.18 0.008 270);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.18 0.008 270);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.87 0.00 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --primary: oklch(0.75 0.18 195);
+  --primary-foreground: oklch(0.13 0.005 270);
+  --secondary: oklch(0.25 0.01 270);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.371 0 0);
+  --muted: oklch(0.25 0.01 270);
+  --muted-foreground: oklch(0.65 0.02 270);
+  --accent: oklch(0.30 0.015 270);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.809 0.105 251.813);
-  --chart-2: oklch(0.623 0.214 259.815);
-  --chart-3: oklch(0.546 0.245 262.881);
-  --chart-4: oklch(0.488 0.243 264.376);
-  --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.205 0 0);
+  --border: oklch(0.40 0.03 270 / 30%);
+  --input: oklch(0.40 0.03 270 / 30%);
+  --ring: oklch(0.75 0.18 195);
+  --chart-1: oklch(0.75 0.18 195);
+  --chart-2: oklch(0.70 0.20 300);
+  --chart-3: oklch(0.65 0.25 330);
+  --chart-4: oklch(0.70 0.15 150);
+  --chart-5: oklch(0.65 0.20 60);
+  --sidebar: oklch(0.15 0.008 270);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: oklch(0.75 0.18 195);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.25 0.015 270);
   --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar-border: oklch(0.40 0.03 270 / 25%);
+  --sidebar-ring: oklch(0.75 0.18 195);
+
+  --neon-cyan: oklch(0.75 0.18 195);
+  --neon-purple: oklch(0.65 0.25 300);
+  --neon-pink: oklch(0.70 0.22 330);
 }
 
 @layer base {
@@ -126,4 +130,85 @@
   html {
     @apply font-sans;
   }
+}
+
+/* Neon accent styles */
+.dark {
+  /* Subtle neon glow on cards */
+  & [data-slot="card"] {
+    border-color: oklch(0.40 0.06 270 / 35%);
+    box-shadow: 0 0 15px -3px oklch(0.75 0.18 195 / 8%),
+                inset 0 1px 0 oklch(1 0 0 / 3%);
+  }
+
+  & [data-slot="card"]:hover {
+    border-color: oklch(0.50 0.10 270 / 40%);
+    box-shadow: 0 0 20px -3px oklch(0.75 0.18 195 / 15%),
+                inset 0 1px 0 oklch(1 0 0 / 5%);
+  }
+
+  /* Neon glow on primary buttons */
+  & button[data-slot="button"]:not([data-variant]) {
+    box-shadow: 0 0 12px -2px oklch(0.75 0.18 195 / 40%);
+  }
+  & button[data-slot="button"]:not([data-variant]):hover {
+    box-shadow: 0 0 20px -2px oklch(0.75 0.18 195 / 60%);
+  }
+
+  /* Neon focus rings */
+  & *:focus-visible {
+    outline-color: oklch(0.75 0.18 195 / 70%);
+    box-shadow: 0 0 8px oklch(0.75 0.18 195 / 30%);
+  }
+
+  /* Neon sidebar border */
+  & aside {
+    border-color: oklch(0.40 0.06 270 / 30%);
+    box-shadow: 1px 0 20px -5px oklch(0.65 0.25 300 / 10%);
+  }
+
+  /* Neon glow on dialog overlay */
+  & [data-slot="dialog-content"] {
+    box-shadow: 0 0 40px -8px oklch(0.75 0.18 195 / 20%),
+                0 0 80px -15px oklch(0.65 0.25 300 / 12%);
+    border-color: oklch(0.40 0.06 270 / 40%);
+  }
+
+  /* Neon badge glow */
+  & [data-slot="badge"] {
+    box-shadow: 0 0 6px -1px oklch(0.75 0.18 195 / 20%);
+  }
+
+  /* Neon accent on active sidebar links */
+  & nav a.bg-accent {
+    box-shadow: inset 3px 0 0 oklch(0.75 0.18 195),
+                0 0 10px -4px oklch(0.75 0.18 195 / 25%);
+  }
+
+  /* Neon checkbox glow when checked */
+  & button[data-slot="checkbox"][data-state="checked"] {
+    box-shadow: 0 0 8px -1px oklch(0.75 0.18 195 / 50%);
+  }
+
+  /* Subtle scanline texture on background */
+  & body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      oklch(0 0 0 / 2%) 2px,
+      oklch(0 0 0 / 2%) 4px
+    );
+  }
+}
+
+/* Neon text glow utility */
+.neon-text {
+  text-shadow: 0 0 7px oklch(0.75 0.18 195 / 60%),
+               0 0 20px oklch(0.75 0.18 195 / 30%);
 }

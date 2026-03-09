@@ -152,7 +152,7 @@ export function Sidebar({
   return (
     <aside className="w-64 border-r bg-muted/30 flex flex-col h-full">
       <div className="p-4 border-b">
-        <h1 className="text-lg font-bold tracking-tight">Project Manager</h1>
+        <h1 className="text-lg font-bold tracking-tight neon-text">Project Manager</h1>
       </div>
 
       {/* Workspace tab bar */}
