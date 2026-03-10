@@ -85,16 +85,18 @@ export async function updateProject(
   const { tagIds, ...projectData } = data;
 
   if (tagIds !== undefined) {
-    await db.projectTag.deleteMany({ where: { projectId: id } });
-    await db.projectTag.createMany({
-      data: tagIds.map((tagId) => ({ projectId: id, tagId })),
-    });
+    await db.$transaction([
+      db.projectTag.deleteMany({ where: { projectId: id } }),
+      db.projectTag.createMany({
+        data: tagIds.map((tagId) => ({ projectId: id, tagId })),
+      }),
+    ]);
   }
 
-  const project = await db.project.update({
-    where: { id },
-    data: projectData,
-  });
+  const hasProjectUpdates = Object.keys(projectData).length > 0;
+  const project = hasProjectUpdates
+    ? await db.project.update({ where: { id }, data: projectData })
+    : await db.project.findUniqueOrThrow({ where: { id } });
 
   revalidatePath("/");
   revalidatePath(`/projects/${id}`);

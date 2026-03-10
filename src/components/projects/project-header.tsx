@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
+  DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -229,7 +229,7 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
             <ChevronDown className="size-3" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+            <div className="px-1.5 py-1 text-xs font-medium text-muted-foreground">Change Status</div>
             <DropdownMenuSeparator />
             {Object.entries(STATUS_LABELS).map(([value, label]) => (
               <DropdownMenuItem
@@ -254,7 +254,7 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
             <ChevronDown className="size-3" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            <DropdownMenuLabel>Change Priority</DropdownMenuLabel>
+            <div className="px-1.5 py-1 text-xs font-medium text-muted-foreground">Change Priority</div>
             <DropdownMenuSeparator />
             {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
               <DropdownMenuItem
@@ -282,7 +282,7 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
             <ChevronDown className="size-3" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            <DropdownMenuLabel>Toggle Tags</DropdownMenuLabel>
+            <div className="px-1.5 py-1 text-xs font-medium text-muted-foreground">Toggle Tags</div>
             <DropdownMenuSeparator />
             {allTags.length === 0 ? (
               <div className="px-2 py-1.5 text-sm text-muted-foreground">
@@ -290,21 +290,18 @@ export function ProjectHeader({ project, allTags }: ProjectHeaderProps) {
               </div>
             ) : (
               allTags.map((tag) => (
-                <DropdownMenuItem
+                <DropdownMenuCheckboxItem
                   key={tag.id}
+                  checked={selectedTagIds.includes(tag.id)}
                   onClick={() => toggleTag(tag.id)}
+                  closeOnClick={false}
                 >
                   <span
                     className="inline-block size-2 rounded-full"
                     style={{ backgroundColor: tag.color }}
                   />
                   {tag.name}
-                  {selectedTagIds.includes(tag.id) && (
-                    <span className="ml-auto text-xs text-muted-foreground">
-                      Active
-                    </span>
-                  )}
-                </DropdownMenuItem>
+                </DropdownMenuCheckboxItem>
               ))
             )}
           </DropdownMenuContent>
